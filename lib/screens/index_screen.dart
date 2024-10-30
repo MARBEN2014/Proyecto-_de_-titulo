@@ -66,9 +66,9 @@ class IndexScreen extends StatelessWidget {
       pageBuilder: (context, animation, secondaryAnimation) =>
           const LoginScreen(),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = 0.0; // Inicia desde completamente transparente
-        const end = 1.0; // Termina completamente opaco
-        const curve = Curves.easeInOut; // Curva de la animación
+        const begin = 0.0;
+        const end = 1.0;
+        const curve = Curves.easeInOut;
 
         final tween = Tween<double>(begin: begin, end: end);
         final curvedAnimation = CurvedAnimation(
