@@ -8,6 +8,7 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _LoginScreenState createState() => _LoginScreenState();
 }
 
@@ -223,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               children: [
                                 GestureDetector(
                                   onTap: () {
-                                    // Navega a la lógica de autenticación de Facebook
+                                    // logica para autenticar con Facebook
                                     Navigator.pushNamed(
                                         context, '/loginFacebook');
                                   },
@@ -237,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     width: 30), // Espaciado entre logos
                                 GestureDetector(
                                   onTap: () {
-                                    // Navega a la lógica de autenticación de Google
+                                    // aca va la lógica para autenticar con Google
                                     Navigator.pushNamed(
                                         context, '/loginGoogle');
                                   },

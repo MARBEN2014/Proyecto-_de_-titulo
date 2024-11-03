@@ -7,6 +7,7 @@ class MisCitasScreen extends StatefulWidget {
   const MisCitasScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _MisCitasScreenState createState() => _MisCitasScreenState();
 }
 
