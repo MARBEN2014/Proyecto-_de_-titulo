@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:paraflorseer/themes/app_colors.dart'; // Asegúrate de importar tus temas
-import 'package:paraflorseer/widgets/custom_app_bar.dart'; // Import del AppBar personalizado
-import 'package:paraflorseer/widgets/bottom_nav_bar.dart'; // Import del Bottom Navigation Bar
+import 'package:paraflorseer/themes/app_colors.dart';
+import 'package:paraflorseer/widgets/custom_app_bar.dart';
+import 'package:paraflorseer/widgets/bottom_nav_bar.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -11,22 +11,25 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
-  bool isEditing = false; // Variable para determinar si está en modo edición
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController birthdateController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
+
+  String? selectedGender;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: const CustomAppBar(), // Uso del AppBar personalizado
+      appBar: const CustomAppBar(),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0), // Espaciado general
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-
-              // Título de la pantalla
               const Center(
                 child: Text(
                   'Perfil de Usuario',
@@ -37,67 +40,47 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-              // Imagen del perfil
               const Center(
                 child: CircleAvatar(
                   radius: 60,
-                  backgroundImage: AssetImage(
-                      'assets/usuario.png'), // Ruta de la imagen del perfil
-                  backgroundColor: AppColors.secondary, // Color de fondo
+                  backgroundImage: AssetImage('assets/usuario.png'),
+                  backgroundColor: AppColors.secondary,
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Información del usuario editable
+              // Campos de información de usuario como TextFields
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal:
-                        20.0), // Ajusta el padding a izquierda y derecha
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   children: [
-                    _buildEditableUserInfoRow(
-                        context, 'Nombre Completo', 'Diego Vásquez'),
-                    _buildEditableUserInfoRow(
-                        context, 'Fecha de Nacimiento', '21/01/1984'),
-                    _buildEditableUserInfoRow(context, 'Sexo', 'Masculino'),
-                    _buildEditableUserInfoRow(
-                        context, 'Teléfono Celular', '+569 1234 5678'),
-                    _buildEditableUserInfoRow(
-                        context, 'Correo', 'diegovasquez21.@gmail.com'),
+                    _buildEditableTextField(
+                        context, 'Nombre Completo', nameController,
+                        isName: true),
+                    _buildDateField(context),
+                    _buildGenderDropdown(),
+                    _buildPhoneField(),
+                    _buildEditableTextField(
+                        context, 'Dirección', addressController),
                   ],
                 ),
               ),
 
               const SizedBox(height: 20),
-              // Botón de edición general
+
+              // Botón de guardar datos
               Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      if (isEditing) {
-                        // Guardar datos y mostrar banner
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Datos guardados correctamente.'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                      isEditing =
-                          !isEditing; // Cambiar entre modo edición y guardado
-                    });
-                  },
+                  onPressed: () => _saveUserData(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary, // Color del botón
+                    backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 30, vertical: 15),
                   ),
-                  child: Text(
-                    isEditing ? 'Guardar Datos' : 'Editar Perfil',
-                    style: const TextStyle(
-                        fontSize: 16, color: AppColors.secondary),
+                  child: const Text(
+                    'Guardar Datos',
+                    style: TextStyle(fontSize: 16, color: AppColors.secondary),
                   ),
                 ),
               ),
@@ -118,9 +101,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
               // Listado de citas
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal:
-                        20.0), // Ajusta el padding para los elementos de historial
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   children: [
                     _buildAppointmentTile('Reiki', '10 de octubre, 10:00 AM'),
@@ -134,77 +115,109 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ),
         ),
       ),
-      bottomNavigationBar:
-          const BottomNavBar(), // Uso del Bottom Navigation Bar
+      bottomNavigationBar: const BottomNavBar(),
     );
   }
 
-  // Widget para mostrar información del usuario con opción de edición
-  Widget _buildEditableUserInfoRow(
-      BuildContext context, String label, String value) {
+  // Widget para mostrar un campo editable como TextField
+  Widget _buildEditableTextField(
+      BuildContext context, String label, TextEditingController controller,
+      {bool isName = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(25.0),
           ),
-          Row(
-            children: [
-              Text(
-                value,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-              ),
-              const SizedBox(width: 8),
-              // Mostrar el ícono de edición solo cuando esté en modo edición
-              if (isEditing)
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.grey),
-                  onPressed: () {
-                    _showEditDialog(context, label, value);
-                  },
-                ),
-            ],
-          ),
-        ],
+        ),
+        textCapitalization:
+            isName ? TextCapitalization.words : TextCapitalization.none,
+        onChanged: (value) {
+          if (isName) {
+            controller.text = value.toUpperCase();
+            controller.selection = TextSelection.fromPosition(
+                TextPosition(offset: controller.text.length));
+          }
+        },
       ),
     );
   }
 
-  // Mostrar un diálogo de edición para cada campo
-  void _showEditDialog(
-      BuildContext context, String label, String currentValue) {
-    TextEditingController controller =
-        TextEditingController(text: currentValue);
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Editar $label'),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(hintText: 'Ingrese su $label'),
+  // Widget para la fecha de nacimiento
+  Widget _buildDateField(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: birthdateController,
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: 'Fecha de Nacimiento',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(25.0),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Guardar los cambios (lógica a implementar)
-                Navigator.of(context).pop();
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        );
-      },
+        ),
+        onTap: () async {
+          DateTime? selectedDate = await showDatePicker(
+            context: context,
+            initialDate: DateTime(2000),
+            firstDate: DateTime(1900),
+            lastDate: DateTime.now(),
+          );
+          if (selectedDate != null) {
+            birthdateController.text =
+                "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+          }
+        },
+      ),
+    );
+  }
+
+  // Widget para el menú desplegable de género
+  Widget _buildGenderDropdown() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: DropdownButtonFormField<String>(
+        value: selectedGender,
+        items: ['Masculino', 'Femenino']
+            .map((label) => DropdownMenuItem(
+                  child: Text(label),
+                  value: label,
+                ))
+            .toList(),
+        onChanged: (value) {
+          setState(() {
+            selectedGender = value;
+          });
+        },
+        decoration: InputDecoration(
+          labelText: 'Sexo',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(25.0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Campo de teléfono con código fijo 569
+  Widget _buildPhoneField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: phoneController,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          prefixText: '+569 ',
+          labelText: 'Teléfono Celular',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(25.0),
+          ),
+        ),
+        maxLength: 8,
+      ),
     );
   }
 
@@ -216,12 +229,98 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         title:
             Text(therapy, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(dateTime),
-        trailing: const Icon(Icons.arrow_forward,
-            color: AppColors.primary), // Icono para indicar acción
+        trailing: const Icon(Icons.arrow_forward, color: AppColors.primary),
         onTap: () {
           // Navegar a la pantalla de detalles de la cita
         },
       ),
+    );
+  }
+
+  // Función para guardar datos del usuario
+  void _saveUserData(BuildContext context) {
+    if (nameController.text.isEmpty ||
+        birthdateController.text.isEmpty ||
+        phoneController.text.isEmpty ||
+        addressController.text.isEmpty ||
+        selectedGender == null) {
+      _showErrorDialog(context);
+    } else {
+      _showConfirmationDialog(context);
+    }
+  }
+
+  // Diálogo de confirmación de datos guardados
+  void _showConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.primary,
+          content: Container(
+            width: 60, // Ancho deseado
+            height: 60, // Alto deseado
+            padding:
+                const EdgeInsets.only(top: 20), // Espacio en la parte superior
+            child: const Center(
+              child: Text(
+                'Datos guardados correctamente.',
+                style: TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'Aceptar',
+                style: TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Diálogo de error si falta un campo por completar
+  void _showErrorDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Color.fromARGB(255, 230, 158, 125),
+          content: Container(
+            width: 60, // Ancho deseado
+            height: 60, // Alto deseado
+
+            padding: const EdgeInsets.only(
+                top: 20), // Espacio adicional en la parte superior
+            alignment: Alignment.center, // Alineación centrada
+            child: const Text(
+              'Por favor, complete todos los campos.',
+              style: TextStyle(color: Colors.white),
+              textAlign: TextAlign.center, // Texto centrado
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'Aceptar',
+                style: TextStyle(color: Colors.white),
+                textAlign: TextAlign.left,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

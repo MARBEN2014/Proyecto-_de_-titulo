@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 //import 'package:paraflorseer/ruta_welcome_screen/agendar_screen.dart';
-import 'package:paraflorseer/screens/register2_screen.dart';
+//import 'package:paraflorseer/screens/register2_screen.dart';
 import 'package:paraflorseer/screens/screens.dart';
 import 'package:paraflorseer/screens/terminos_condiciones.dart';
 import 'package:paraflorseer/widgets/widgets.dart';
@@ -9,9 +9,10 @@ import '../ruta_welcome_screen/ruta_welcome_screen.dart'; // Import de todas las
 class AppRoutes {
   static Map<String, WidgetBuilder> getRoutes() {
     return {
+      '/': (context) => const WelcomeScreen(),
       '/login': (context) => const LoginScreen(),
       '/register': (context) => const RegisterScreen(),
-      '/register2': (context) => const Register2Screen(),
+      //'/register2': (context) => const Register2Screen(),
       '/recovery_screen': (context) => const RecoveryScreen(),
       '/welcome_screen': (context) => const WelcomeScreen(),
       '/mis_citas_screen': (context) => MisCitasScreen(),

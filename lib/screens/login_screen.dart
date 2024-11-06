@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paraflorseer/preferencias/pref_usuarios.dart';
 import 'package:paraflorseer/themes/app_colors.dart';
 import 'package:paraflorseer/themes/app_text_styles.dart';
 //import 'package:paraflorseer/widgets/bottom_nav_bar.dart';
@@ -24,14 +25,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isPasswordVisible = false;
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   PreferenciasUsuarios.init(); // Inicializa las preferencias
+  // }
+
   void _login() {
     if (_formKey.currentState!.validate()) {
       String email = _emailController.text;
       String password = _passwordController.text;
 
       // Correo y contraseña de prueba
-      String validEmail = 'usuario@prueba.com';
-      String validPassword = 'Prueba123';
+      String validEmail = 'diegovasquez21@gmail.com';
+      String validPassword = '@@Romi15682-8';
 
       setState(() {
         _labelColorEmail = AppColors.primary;
@@ -40,6 +47,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Verificar si el correo y la contraseña son correctos
       if (email == validEmail && password == validPassword) {
+        // Guarda la última página visitada
+        PreferenciasUsuarios().ultimaPagina = '/user';
         // Navega a la pantalla de perfil de usuario
         Navigator.pushNamed(context, '/user');
       } else {
@@ -117,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: TextFormField(
                                 controller: _emailController,
                                 decoration: InputDecoration(
-                                  labelText: 'Correo Electrónico',
+                                  labelText: 'Usuario',
                                   labelStyle:
                                       AppTextStyles.bodyTextStyle.copyWith(
                                     color: _labelColorEmail,
