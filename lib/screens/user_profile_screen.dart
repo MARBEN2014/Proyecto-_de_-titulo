@@ -1,4 +1,9 @@
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'package:paraflorseer/themes/app_colors.dart';
 import 'package:paraflorseer/widgets/custom_app_bar.dart';
 import 'package:paraflorseer/widgets/bottom_nav_bar.dart';
@@ -15,13 +20,74 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   final TextEditingController birthdateController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
-
   String? selectedGender;
+  File? _image;
+  String? _imageUrl;
+  String? name;
+
+  // Función para obtener los datos del usuario desde Firestore
+  Future<void> fetchUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final uid = user.uid;
+      final userDoc =
+          await FirebaseFirestore.instance.collection('user').doc(uid).get();
+      final data = userDoc.data();
+
+      if (data != null) {
+        setState(() {
+          name = data['name']; // Guardamos el nombre para mostrar
+          nameController.text = data['name'] ?? '';
+          birthdateController.text = data['birthdate'] ?? '';
+          phoneController.text = data['phone']?.substring(5) ?? '';
+          addressController.text = data['address'] ?? '';
+          selectedGender = data['gender'];
+          _imageUrl = data['profileImage'];
+        });
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData(); // Cargar datos al iniciar la pantalla
+  }
+
+  // Función para elegir la imagen del perfil
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
+  // Subir imagen a Firebase Storage
+  Future<String?> _uploadImage() async {
+    if (_image == null) return null;
+
+    try {
+      final storageRef =
+          FirebaseStorage.instance.ref().child('profile_pictures');
+
+      final imageRef =
+          storageRef.child('${FirebaseAuth.instance.currentUser!.uid}.jpg');
+      await imageRef.putFile(_image!);
+      final imageUrl = await imageRef.getDownloadURL();
+      return imageUrl;
+    } catch (e) {
+      print("Error uploading image: $e");
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.secondary,
       appBar: const CustomAppBar(),
       body: SingleChildScrollView(
         child: Padding(
@@ -36,16 +102,38 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: AppColors.secondary,
                   ),
                 ),
               ),
+              const SizedBox(height: 10),
+
+              // Mostrar el nombre del usuario
+              Center(
+                child: Text(
+                  name != null ? 'Hola, $name' : 'Hola, Usuario',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 20),
-              const Center(
-                child: CircleAvatar(
-                  radius: 60,
-                  backgroundImage: AssetImage('assets/usuario.png'),
-                  backgroundColor: AppColors.secondary,
+
+              // Foto de perfil
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundImage: _image != null
+                        ? FileImage(_image!)
+                        : const AssetImage('assets/usuario.png')
+                            as ImageProvider,
+                    backgroundColor: AppColors.secondary,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -56,7 +144,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 child: Column(
                   children: [
                     _buildEditableTextField(
-                        context, 'Nombre Completo', nameController,
+                        context, 'Nombre y Apellido', nameController,
                         isName: true),
                     _buildDateField(context),
                     _buildGenderDropdown(),
@@ -66,7 +154,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 20),
 
               // Botón de guardar datos
@@ -85,32 +172,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Historial de citas centrado
-              const Center(
-                child: Text(
-                  'Historial de Citas',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Listado de citas
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  children: [
-                    _buildAppointmentTile('Reiki', '10 de octubre, 10:00 AM'),
-                    _buildAppointmentTile(
-                        'Masaje Craneal', '15 de octubre, 11:00 AM'),
-                    _buildAppointmentTile('Yoga', '20 de octubre, 9:00 AM'),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
@@ -221,24 +282,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  // Widget para mostrar una cita en el historial
-  Widget _buildAppointmentTile(String therapy, String dateTime) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: ListTile(
-        title:
-            Text(therapy, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(dateTime),
-        trailing: const Icon(Icons.arrow_forward, color: AppColors.primary),
-        onTap: () {
-          // Navegar a la pantalla de detalles de la cita
-        },
-      ),
-    );
-  }
-
-  // Función para guardar datos del usuario
-  void _saveUserData(BuildContext context) {
+  // Función para guardar datos del usuario en Firestore
+  Future<void> _saveUserData(BuildContext context) async {
     if (nameController.text.isEmpty ||
         birthdateController.text.isEmpty ||
         phoneController.text.isEmpty ||
@@ -246,7 +291,27 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         selectedGender == null) {
       _showErrorDialog(context);
     } else {
-      _showConfirmationDialog(context);
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          String? imageUrl = await _uploadImage();
+          String uid = user.uid;
+
+          // Guardar los datos en Firestore
+          await FirebaseFirestore.instance.collection('user').doc(uid).set({
+            'name': nameController.text,
+            'birthdate': birthdateController.text,
+            'phone': '+569 ${phoneController.text}',
+            'address': addressController.text,
+            'gender': selectedGender,
+            'profileImage': imageUrl, // Guardamos la URL de la imagen
+          }, SetOptions(merge: true)); // Merge para no sobrescribir otros datos
+
+          _showConfirmationDialog(context);
+        }
+      } catch (e) {
+        print("Error saving user data: $e");
+      }
     }
   }
 
@@ -258,10 +323,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         return AlertDialog(
           backgroundColor: AppColors.primary,
           content: Container(
-            width: 60, // Ancho deseado
-            height: 60, // Alto deseado
-            padding:
-                const EdgeInsets.only(top: 20), // Espacio en la parte superior
+            width: 60,
+            height: 60,
+            padding: const EdgeInsets.only(top: 20),
             child: const Center(
               child: Text(
                 'Datos guardados correctamente.',
@@ -293,18 +357,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Color.fromARGB(255, 230, 158, 125),
+          backgroundColor: AppColors.primary,
           content: Container(
-            width: 60, // Ancho deseado
-            height: 60, // Alto deseado
-
-            padding: const EdgeInsets.only(
-                top: 20), // Espacio adicional en la parte superior
-            alignment: Alignment.center, // Alineación centrada
-            child: const Text(
-              'Por favor, complete todos los campos.',
-              style: TextStyle(color: Colors.white),
-              textAlign: TextAlign.center, // Texto centrado
+            width: 60,
+            height: 60,
+            padding: const EdgeInsets.only(top: 20),
+            child: const Center(
+              child: Text(
+                'Por favor complete todos los campos.',
+                style: TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
           actions: [
@@ -315,7 +378,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               child: const Text(
                 'Aceptar',
                 style: TextStyle(color: Colors.white),
-                textAlign: TextAlign.left,
+                textAlign: TextAlign.center,
               ),
             ),
           ],

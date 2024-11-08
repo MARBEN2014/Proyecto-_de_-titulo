@@ -1,10 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_validator/form_validator.dart';
+import 'package:paraflorseer/preferencias/pref_usuarios.dart';
 import 'package:paraflorseer/screens/screens.dart';
 import 'package:paraflorseer/themes/app_colors.dart';
 import 'package:paraflorseer/utils/auth.dart';
 import 'package:paraflorseer/utils/snackbar.dart';
 import 'package:paraflorseer/widgets/custom_app_bar.dart';
-
 import '../widgets/bottom_nav_bar.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -15,30 +18,17 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKeyPage1 = GlobalKey<FormState>();
+  final _formKeyPage1 = GlobalKey<FormBuilderState>();
+  final AuthService _auth = AuthService();
+  bool _isObscurePassword = true;
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  bool _isObscurePassword = true;
-
   Future<void> _refreshScreen() async {
-    setState(() {
-      _emailController.clear();
-      _passwordController.clear();
-    });
+    _formKeyPage1.currentState?.reset();
     await Future.delayed(const Duration(seconds: 1));
   }
-
-  bool _validateEmail(String email) {
-    final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    return regex.hasMatch(email);
-  }
-
-  bool _passwordsMatch(String password, String confirmPassword) {
-    return password == confirmPassword;
-  }
-
-  final AuthService _auth = AuthService();
 
   @override
   Widget build(BuildContext context) {
@@ -61,11 +51,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Form(
+                FormBuilder(
                   key: _formKeyPage1,
+                  autovalidateMode: AutovalidateMode
+                      .onUserInteraction, // Validación en tiempo real
                   child: Column(
                     children: [
-                      TextFormField(
+                      FormBuilderTextField(
+                        name: 'email', // nombre del campo correo electrónico
                         controller: _emailController,
                         decoration: const InputDecoration(
                           labelText: 'Correo electrónico',
@@ -80,18 +73,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 BorderRadius.all(Radius.circular(25.0)),
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa tu correo electrónico';
-                          }
-                          if (!_validateEmail(value)) {
-                            return 'Ingresa un correo electrónico válido';
-                          }
-                          return null;
-                        },
+                        validator: ValidationBuilder()
+                            .email('Ingresa un correo electrónico válido')
+                            .required('El correo electrónico es obligatorio')
+                            .build(),
                       ),
                       const SizedBox(height: 16.0),
-                      TextFormField(
+
+                      //
+                      FormBuilderTextField(
+                        name: 'password',
                         controller: _passwordController,
                         obscureText: _isObscurePassword,
                         decoration: InputDecoration(
@@ -119,15 +110,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             },
                           ),
                         ),
+
+                        //
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Por favor ingresa tu contraseña';
+                            return 'La contraseña es obligatoria';
                           }
-                          return null;
+                          if (value.length < 6) {
+                            return 'La contraseña debe tener al menos 6 caracteres';
+                          }
+                          // Verificación adicional: debe contener al menos una letra y un número
+                          if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$')
+                              .hasMatch(value)) {
+                            return 'La contraseña debe contener al menos una letra\n y un número';
+                          }
+                          return null; // Si pasa todas las validaciones
                         },
                       ),
+
                       const SizedBox(height: 16.0),
                       const SizedBox(height: 30.0),
+
+                      //
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -138,33 +142,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         onPressed: () async {
-                          showSnackBar(context, 'se esta mostrando un mensaje');
-                          // _formKeyPage1.currentState?.save();
-                          // if (_formKeyPage1.currentState?.validate() == true) {
-                          //   final correo = _emailController.text.trim();
-                          //   final pass = _passwordController.text.trim();
+                          var prefs = PreferenciasUsuarios();
+                          //showSnackBar(context, 'Mensaje de prueba');
 
-                          //   var result =
-                          //       await _auth.createAccount(correo, pass);
+                          //validar formulario, los datos son ingresados corectamenta
+                          //se inicia el proceso autenticaión
+                          _formKeyPage1.currentState?.save();
+                          if (_formKeyPage1.currentState?.validate() == true) {
+                            final v = _formKeyPage1.currentState?.value;
+                            print(v?['email']);
+                            print(v?['password']);
 
-                          //   if (result == 1) {
-                          //     show     (
-                          //         'Error de password demasiado debil.favor cambiar',
-                          //         false);
-                          //   } else if (result == 2) {
-                          //     _showConfirmationDialog(
-                          //         'Error email ya esta en uso.', false);
-                          //   } else if (result != null) {
-                          //     _showConfirmationDialog(
-                          //         'El registro se realizo con exito', true);
-                          //   }
-                          // }
+                            // con esta linea se crea el usuario enviando correo y contraseña
+                            // la respuesta se almacena en resultado
+                            var result = await _auth.createAccount(
+                                v?['email'], v?['password']);
+                            print(
+                                'Resultado de la creación de cuenta: $result');
+                            if (result == 1) {
+                              showSnackBar(context,
+                                  '¡Error, password demasiado debil, favor cambiar');
+                            } else if (result == 2) {
+                              showSnackBar(
+                                  context, 'Error, email ya esta en uso');
+                            } else if (result != null) {
+                              // Obtener el UID del usuario recién creado
+
+                              // movimento de traspaso de informacion al crear
+                              prefs.ultimouid = result;
+                              FirebaseFirestore.instance
+                                  .collection('user')
+                                  .doc(result)
+                                  .set({
+                                // sentencia para guradar el usario en la base de datos de firebase
+                                'email': v?['email'],
+                                'password': v?['password']
+                              });
+                              Navigator.popAndPushNamed(context, '/user');
+                            }
+                          }
                         },
                         child: const Text(
                           '¡Registrarse!',
                           style: TextStyle(fontSize: 20, color: Colors.white),
                         ),
                       ),
+
+                      ///
                     ],
                   ),
                 ),

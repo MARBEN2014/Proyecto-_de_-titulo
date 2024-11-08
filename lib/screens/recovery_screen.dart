@@ -34,7 +34,7 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
       });
     } else {
       // Simular envío de correo
-      if (email == 'cuenta@valida.com') {
+      if (email == 'diegovasquez21@gmail.com') {
         setState(() {
           _errorMessage = '';
           _isEmailSent = true;

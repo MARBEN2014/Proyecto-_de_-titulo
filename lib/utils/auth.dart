@@ -1,6 +1,8 @@
 // creacion de una cuenta y el inicio de sesionde una cuenta
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:paraflorseer/preferencias/pref_usuarios.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -10,8 +12,10 @@ class AuthService {
     try {
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: correo, password: pass);
-      print(userCredential.user?.uid); //se guarda el id del usuario
-    } on FirebaseException catch (e) {
+      print(userCredential.user);
+      return (userCredential.user?.uid);
+      //se guarda el id del usuario
+    } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         print('The password provided is too weak');
         return 1;
@@ -22,7 +26,7 @@ class AuthService {
       }
       // si error no esta en la logica de arriba mostrara un error general
     } catch (e) {
-      print(6);
+      print(e);
     }
   }
 
@@ -32,6 +36,7 @@ class AuthService {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
+      // se crea un uid unicom para cada usuario
       //obtener el usuario
       final a = userCredential.user;
       if (a?.uid != null) {
@@ -45,4 +50,13 @@ class AuthService {
       }
     }
   }
+
+  // // Método para cerrar sesión
+  // Future<void> signOut() async {
+  //   await _auth.signOut(); // Cierra la sesión en Firebase
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   await prefs.setBool('is_logged_in', false);
+  //   PreferenciasUsuarios().ultimaPagina =
+  //       '/login'; // Restablecer a la pantalla de inicio de sesión
+  // }
 }

@@ -172,7 +172,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              // Carrusel de imágenes utilizando el método _buildImageContainer
+              //Carrusel de imágenes utilizando el método _buildImageContainer
               CarouselSlider.builder(
                 itemCount: imgList.length,
                 itemBuilder: (BuildContext context, int index, int realIndex) {

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 //import 'package:paraflorseer/screens/user_profile_screen.dart';
 import 'package:paraflorseer/themes/app_colors.dart';
@@ -112,10 +113,10 @@ class BottomNavBar extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.logout),
-                  title: const Text('Cerrar Sesión'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/login');
+                  title: const Text('Cerrar sesion'),
+                  onTap: () async {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.popAndPushNamed(context, '/login');
                   },
                 ),
               ],

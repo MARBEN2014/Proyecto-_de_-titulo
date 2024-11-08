@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 
-void showSnackBar(BuildContext context, String mensaje) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: Center(
-      // Usamos un Center para centrar el contenido
-      child: Text(
+void showSnackBar(
+  BuildContext context,
+  String mensaje,
+) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
         mensaje,
-        textAlign: TextAlign.center, // Asegúrate de que el texto esté centrado
+        textAlign: TextAlign.center, // Centra el texto sin usar Center
+        style: const TextStyle(
+            color: Colors.white), // Asegura visibilidad del texto
       ),
+      duration: const Duration(seconds: 2),
+      backgroundColor: const Color.fromARGB(255, 26, 221, 101),
     ),
-    duration: Duration(seconds: 2),
-    backgroundColor: Color.fromARGB(255, 26, 221, 101),
-  ));
+  );
 }

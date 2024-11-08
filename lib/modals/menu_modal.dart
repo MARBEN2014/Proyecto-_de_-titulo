@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:paraflorseer/themes/app_colors.dart'; // Import de los colores de la app
+import 'package:paraflorseer/themes/app_colors.dart';
+import 'package:paraflorseer/utils/auth.dart'; // Import de los colores de la app
 
 class MenuModal {
   // Función para mostrar el menú modal flotante
@@ -63,10 +65,18 @@ class MenuModal {
                 ),
                 ListTile(
                   leading: const Icon(Icons.logout),
-                  title: const Text('Cerrar Sesión'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/login');
+                  title: const Text('Cerrar sesion'),
+                  onTap: () async {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.popAndPushNamed(context, '/login');
+                    // Cierra el menú (si es un Drawer, por ejemplo)
+                    //Navigator.pop(context);
+
+                    // Llama a la función de cierre de sesión
+                    // AuthService authService = AuthService();
+                    // await authService.signOut();
+
+                    // Navega a la pantalla de inicio de sesión
                   },
                 ),
               ],
