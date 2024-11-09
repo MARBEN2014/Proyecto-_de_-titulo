@@ -1,10 +1,12 @@
+//import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:paraflorseer/screens/welcome_screen.dart';
 import 'package:paraflorseer/themes/app_colors.dart';
 import 'package:paraflorseer/themes/app_text_styles.dart';
 import 'package:paraflorseer/utils/obtenerUserandNAme.dart';
-import 'package:paraflorseer/widgets/bottom_nav_bar.dart';
+//import 'package:paraflorseer/widgets/bottom_nav_bar.dart';
 import 'package:paraflorseer/widgets/custom_app_bar.dart';
 
 class BookingScreen extends StatefulWidget {
@@ -20,9 +22,6 @@ class BookingScreen extends StatefulWidget {
     required this.availableTimes,
     required this.availableDays,
   });
-
-  // Obtén la referencia al usuario actual de Firebase
-  // get user => FirebaseAuth.instance.currentUser;
 
   @override
   _BookingScreenState createState() => _BookingScreenState();
@@ -40,7 +39,7 @@ class _BookingScreenState extends State<BookingScreen> {
     _getUserDetails();
   }
 
-// Función para obtener el nombre del usuario
+  // Función para obtener el nombre del usuario
   Future<void> _getUserDetails() async {
     String? fetchedUserName =
         await fetchUserName(); // Llama a la función de nombre
@@ -58,6 +57,36 @@ class _BookingScreenState extends State<BookingScreen> {
       selectedTime = null;
       selectedDay = null;
     });
+  }
+
+  // Función para guardar la reserva en Firestore
+  Future<void> _saveBookingToFirestore() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        // Si no hay un usuario autenticado
+        throw Exception("Usuario no autenticado");
+      }
+
+      // Crear un documento en la colección 'servicios_bienestar'
+      await FirebaseFirestore.instance.collection('servicios_bienestar').add({
+        'user_id': user.uid, // ID del usuario que hizo la reserva
+        'service_name': widget.serviceName,
+        'therapist': selectedTherapist,
+        'time': selectedTime,
+        'day': selectedDay,
+        'user_name': userName,
+        'created_at': FieldValue.serverTimestamp(), // Fecha y hora de creación
+      });
+
+      // Mostrar el cuadro de confirmación de cita
+      _showConfirmationDialog(context);
+    } catch (e) {
+      // En caso de error, muestra un mensaje
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al guardar la cita: $e')),
+      );
+    }
   }
 
   // Función para mostrar el cuadro flotante de confirmación
@@ -144,8 +173,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-              ), //center
-
+              ),
               Center(
                 child: Text(
                   'Bienvenido, $userName',
@@ -155,7 +183,6 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 10),
               // Muestra la lista de terapeutas
               Wrap(
@@ -258,24 +285,27 @@ class _BookingScreenState extends State<BookingScreen> {
                     if (selectedTherapist != null &&
                         selectedTime != null &&
                         selectedDay != null) {
-                      _showConfirmationDialog(context);
+                      _saveBookingToFirestore(); // Guarda la cita en Firestore
                     } else {
-                      // Si falta alguna selección, mostramos un mensaje de error
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('Por favor selecciona todos los campos')),
+                        const SnackBar(
+                          content:
+                              Text('Por favor, selecciona todos los campos.'),
+                        ),
                       );
                     }
                   },
                   style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12.0),
                     backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 15.0, horizontal: 40.0),
-                    textStyle: const TextStyle(fontSize: 18),
-                    foregroundColor: AppColors.secondary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
-                  child: const Text('Confirmar Cita'),
+                  child: const Text(
+                    'Confirmar Cita',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
               ),
             ],

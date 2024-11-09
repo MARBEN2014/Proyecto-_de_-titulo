@@ -33,7 +33,7 @@ class CustomBodyWellness extends StatelessWidget {
 
         // Si todo está bien, mostramos el contenido
         String userName = snapshot.data ??
-            'Usuario'; // Usamos 'Usuario' si no se obtiene el nombre
+            'usuario'; // Usamos 'Usuario' si no se obtiene el nombre
 
         return SingleChildScrollView(
           child: Padding(
