@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:paraflorseer/screens/welcome_screen.dart';
 import 'package:paraflorseer/themes/app_colors.dart';
 import 'package:paraflorseer/themes/app_text_styles.dart';
+import 'package:paraflorseer/utils/obtenerUserandNAme.dart';
 import 'package:paraflorseer/widgets/bottom_nav_bar.dart';
 import 'package:paraflorseer/widgets/custom_app_bar.dart';
 
@@ -19,8 +21,10 @@ class BookingScreen extends StatefulWidget {
     required this.availableDays,
   });
 
+  // Obtén la referencia al usuario actual de Firebase
+  // get user => FirebaseAuth.instance.currentUser;
+
   @override
-  // ignore: library_private_types_in_public_api
   _BookingScreenState createState() => _BookingScreenState();
 }
 
@@ -28,11 +32,27 @@ class _BookingScreenState extends State<BookingScreen> {
   String? selectedTherapist;
   String? selectedTime;
   String? selectedDay;
+  String? userName; // Para almacenar el nombre del usuario
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserDetails();
+  }
+
+// Función para obtener el nombre del usuario
+  Future<void> _getUserDetails() async {
+    String? fetchedUserName =
+        await fetchUserName(); // Llama a la función de nombre
+    setState(() {
+      userName = fetchedUserName ?? 'Usuario'; // Asigna el nombre o 'Usuario'
+    });
+  }
 
   // Función para restablecer las selecciones
   Future<void> _resetSelections() async {
     await Future.delayed(
-        const Duration(seconds: 1)); // Simular un pequeño retraso
+        const Duration(seconds: 1)); // Simula un pequeño retraso
     setState(() {
       selectedTherapist = null;
       selectedTime = null;
@@ -67,7 +87,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              // texto que se uestra en el recuadro flotante
+              // Texto que se muestra en el cuadro flotante
               Text(
                 'Tu cita con $selectedTherapist el $selectedDay a las $selectedTime ha sido confirmada.',
                 style: AppTextStyles.bodyTextStyle.copyWith(
@@ -78,8 +98,8 @@ class _BookingScreenState extends State<BookingScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Cerrar el cuadro de diálogo
-                  // Navegar a la pantalla BeautyScreen
+                  Navigator.of(context).pop(); // Cierra el cuadro de diálogo
+                  // Navega de nuevo a la pantalla WelcomeScreen
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -108,7 +128,7 @@ class _BookingScreenState extends State<BookingScreen> {
     return Scaffold(
       appBar: const CustomAppBar(),
       body: RefreshIndicator(
-        onRefresh: _resetSelections, // Restablecer las selecciones
+        onRefresh: _resetSelections, // Restablece las selecciones
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16.0),
@@ -124,9 +144,20 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
+              ), //center
+
+              Center(
+                child: Text(
+                  'Bienvenido, $userName',
+                  style: AppTextStyles.bodyTextStyle.copyWith(
+                    color: AppColors.text,
+                    fontSize: 18,
+                  ),
+                ),
               ),
 
               const SizedBox(height: 10),
+              // Muestra la lista de terapeutas
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -134,9 +165,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   return ChoiceChip(
                     label: Text(therapist),
                     selected: selectedTherapist == therapist,
-                    // Color del Chip antes de ser seleccionado
                     backgroundColor: AppColors.secondary,
-                    // Color del Chip cuando es seleccionado
                     selectedColor: AppColors.primary,
                     labelStyle: selectedTherapist == therapist
                         ? AppTextStyles.bodyTextStyle
@@ -151,7 +180,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   );
                 }).toList(),
               ),
-
+              const SizedBox(height: 20),
               Center(
                 child: Text(
                   'Selecciona el Horario:',
@@ -162,8 +191,8 @@ class _BookingScreenState extends State<BookingScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-
               const SizedBox(height: 10),
+              // Muestra la lista de horarios disponibles
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -187,10 +216,9 @@ class _BookingScreenState extends State<BookingScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 20),
-
               Center(
                 child: Text(
-                  'Selecciona el día:',
+                  'Selecciona el Día:',
                   style: AppTextStyles.bodyTextStyle.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColors.text,
@@ -198,16 +226,8 @@ class _BookingScreenState extends State<BookingScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-
-              // Text(
-              //   'Selecciona un día:',
-              //   style: AppTextStyles.bodyTextStyle.copyWith(
-              //     fontWeight: FontWeight.bold,
-              //   ),
-
-              // ),
-
               const SizedBox(height: 10),
+              // Muestra la lista de días disponibles
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -230,44 +250,38 @@ class _BookingScreenState extends State<BookingScreen> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 30),
+              // Botón para confirmar la cita
               Center(
                 child: ElevatedButton(
-                  onPressed: selectedTherapist != null &&
-                          selectedTime != null &&
-                          selectedDay != null
-                      ? () {
-                          _showConfirmationDialog(
-                              context); // Mostrar cuadro flotante
-                        }
-                      : null, // Deshabilitar si no hay selección
-                  child: const Text('Confirmar Cita'),
+                  onPressed: () {
+                    if (selectedTherapist != null &&
+                        selectedTime != null &&
+                        selectedDay != null) {
+                      _showConfirmationDialog(context);
+                    } else {
+                      // Si falta alguna selección, mostramos un mensaje de error
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content:
+                                Text('Por favor selecciona todos los campos')),
+                      );
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: selectedTherapist != null &&
-                            selectedTime != null &&
-                            selectedDay != null
-                        ? AppColors.primary
-                        : AppColors.primary,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(
-                      vertical: 15,
-                      horizontal: 40,
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
+                        vertical: 15.0, horizontal: 40.0),
+                    textStyle: const TextStyle(fontSize: 18),
+                    foregroundColor: AppColors.secondary,
                   ),
+                  child: const Text('Confirmar Cita'),
                 ),
               ),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

@@ -181,6 +181,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   // Widget para mostrar un campo editable como TextField
+
   Widget _buildEditableTextField(
       BuildContext context, String label, TextEditingController controller,
       {bool isName = false}) {
@@ -198,7 +199,21 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             isName ? TextCapitalization.words : TextCapitalization.none,
         onChanged: (value) {
           if (isName) {
-            controller.text = value.toUpperCase();
+            // Separar el nombre y el apellido automáticamente si es necesario
+            List<String> names = value.split(' ');
+            for (int i = 0; i < names.length; i++) {
+              if (names[i].isNotEmpty) {
+                names[i] = names[i][0].toUpperCase() +
+                    names[i].substring(1).toLowerCase();
+              }
+            }
+            String formattedValue =
+                names.join(' '); // Juntar el nombre con espacio
+
+            // Actualizar el texto del controlador con el formato adecuado
+            controller.text = formattedValue;
+
+            // Mover el cursor al final del texto
             controller.selection = TextSelection.fromPosition(
                 TextPosition(offset: controller.text.length));
           }

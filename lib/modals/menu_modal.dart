@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:paraflorseer/themes/app_colors.dart';
-import 'package:paraflorseer/utils/auth.dart'; // Import de los colores de la app
+//import 'package:paraflorseer/utils/auth.dart'; // Import de los colores de la app
 
 class MenuModal {
   // Función para mostrar el menú modal flotante

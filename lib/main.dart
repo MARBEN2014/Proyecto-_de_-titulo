@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:paraflorseer/firebase_options.dart';
 import 'package:paraflorseer/preferencias/pref_usuarios.dart';
-import 'package:paraflorseer/screens/index_screen.dart';
+//import 'package:paraflorseer/screens/index_screen.dart';
 //import 'package:paraflorseer/screens/index_screen.dart';
 //import 'package:paraflorseer/screens/welcome_screen.dart';
 
