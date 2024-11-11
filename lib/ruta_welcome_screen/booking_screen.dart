@@ -1,4 +1,3 @@
-//import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +5,6 @@ import 'package:paraflorseer/screens/welcome_screen.dart';
 import 'package:paraflorseer/themes/app_colors.dart';
 import 'package:paraflorseer/themes/app_text_styles.dart';
 import 'package:paraflorseer/utils/obtenerUserandNAme.dart';
-//import 'package:paraflorseer/widgets/bottom_nav_bar.dart';
 import 'package:paraflorseer/widgets/custom_app_bar.dart';
 
 class BookingScreen extends StatefulWidget {
@@ -59,18 +57,25 @@ class _BookingScreenState extends State<BookingScreen> {
     });
   }
 
-  // Función para guardar la reserva en Firestore
-  Future<void> _saveBookingToFirestore() async {
+  // Función para guardar la reserva en la subcolección 'reservas' del usuario en Firestore
+  Future<void> _saveBookingToUserSubcollection() async {
     try {
+      // Obtiene el usuario autenticado
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        // Si no hay un usuario autenticado
+        // Si no hay un usuario autenticado, lanza una excepción
         throw Exception("Usuario no autenticado");
       }
 
-      // Crear un documento en la colección 'servicios_bienestar'
-      await FirebaseFirestore.instance.collection('servicios_bienestar').add({
-        'user_id': user.uid, // ID del usuario que hizo la reserva
+      // Crea la referencia a la subcolección 'reservas' dentro del documento del usuario
+      final userReservationsRef = FirebaseFirestore.instance
+          .collection(
+              'user') // Asume que los documentos de usuarios están en la colección 'usuarios'
+          .doc(user.uid) // Documento del usuario actual
+          .collection('Reservas'); // Subcolección 'reservas' del usuario
+
+      // Agrega el documento de la reserva en la subcolección 'reservas' del usuario
+      await userReservationsRef.add({
         'service_name': widget.serviceName,
         'therapist': selectedTherapist,
         'time': selectedTime,
@@ -79,7 +84,7 @@ class _BookingScreenState extends State<BookingScreen> {
         'created_at': FieldValue.serverTimestamp(), // Fecha y hora de creación
       });
 
-      // Mostrar el cuadro de confirmación de cita
+      // Muestra el cuadro de confirmación de cita
       _showConfirmationDialog(context);
     } catch (e) {
       // En caso de error, muestra un mensaje
@@ -277,35 +282,22 @@ class _BookingScreenState extends State<BookingScreen> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 30),
-              // Botón para confirmar la cita
+              const SizedBox(height: 20),
               Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (selectedTherapist != null &&
-                        selectedTime != null &&
-                        selectedDay != null) {
-                      _saveBookingToFirestore(); // Guarda la cita en Firestore
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content:
-                              Text('Por favor, selecciona todos los campos.'),
-                        ),
-                      );
-                    }
-                  },
+                  onPressed: selectedTherapist != null &&
+                          selectedTime != null &&
+                          selectedDay != null
+                      ? _saveBookingToUserSubcollection // Llama a la función para guardar la reserva
+                      : null,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12.0),
                     backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  child: const Text(
-                    'Confirmar Cita',
-                    style: TextStyle(fontSize: 18),
-                  ),
+                  child: const Text('Confirmar Cita'),
                 ),
               ),
             ],

@@ -1,31 +1,76 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:paraflorseer/utils/obtenerUserandNAme.dart';
 import 'package:paraflorseer/widgets/custom_app_bar.dart';
 import 'package:paraflorseer/widgets/bottom_nav_bar.dart';
 import 'package:paraflorseer/themes/app_colors.dart';
+import 'package:paraflorseer/screens/welcome_screen.dart';
 
 class MisCitasScreen extends StatefulWidget {
   const MisCitasScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _MisCitasScreenState createState() => _MisCitasScreenState();
 }
 
 class _MisCitasScreenState extends State<MisCitasScreen> {
-  String nombreUsuario = "Usuario"; // Reemplaza con el nombre real del usuario
+  String? userName;
+  bool isLoading = true;
+  bool citasMostradas = false;
+  List<Map<String, dynamic>> citas = [];
 
-  // Lista de citas
-  List<Map<String, String>> citas = [];
+  @override
+  void initState() {
+    super.initState();
+    _getUserDetails();
+    _fetchReservas();
+  }
 
-  // Función para agregar una nueva cita
-  void agregarCita(String terapeuta, String fecha, String hora) {
+  Future<void> _getUserDetails() async {
+    String? fetchedUserName = await fetchUserName();
     setState(() {
-      citas.add({
-        'terapeuta': terapeuta,
-        'fecha': fecha,
-        'hora': hora,
-      });
+      userName = fetchedUserName ?? '';
     });
+  }
+
+  Future<void> _fetchReservas() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final reservasSnapshot = await FirebaseFirestore.instance
+            .collection('user')
+            .doc(user.uid)
+            .collection('Reservas')
+            .get();
+
+        List<Map<String, dynamic>> nuevasCitas = [];
+        for (var doc in reservasSnapshot.docs) {
+          final data = doc.data();
+          if (data['service_name'] != null &&
+              data['therapist'] != null &&
+              data['day'] != null &&
+              data['time'] != null &&
+              data['created_at'] != null) {
+            nuevasCitas.add(data);
+          }
+        }
+
+        setState(() {
+          citas = nuevasCitas;
+          citasMostradas = citas.isNotEmpty;
+        });
+      }
+    } catch (e) {
+      print("Error al obtener las reservas: $e");
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -36,31 +81,31 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment
+              .start, // Cambié el `center` a `start` para mejor ajuste.
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            // Centrar el nombre del usuario en la parte superior
-            Center(
-              child: Text(
-                'Tus citas agendadas, $nombreUsuario',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+            if (isLoading)
+              const CircularProgressIndicator()
+            else
+              Center(
+                child: Text(
+                  'Hola: $userName Tus citas',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
-            ),
             const SizedBox(height: 10),
-
-            // Mostrar el calendario y mensaje si no hay citas
             if (citas.isEmpty) ...[
-              // Imagen del calendario centrada
               Center(
                 child: Container(
-                  width: 200,
-                  height: 200,
+                  width: 150, // Ajuste de tamaño de la imagen
+                  height: 150,
                   decoration: const BoxDecoration(
                     image: DecorationImage(
                       image: AssetImage('assets/calendario.png'),
@@ -70,7 +115,6 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              // Texto centrado "No tienes citas agendadas"
               const Center(
                 child: Text(
                   "Usted no tiene citas agendadas",
@@ -82,39 +126,76 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                 ),
               ),
             ] else ...[
-              // Mostrar la lista de citas agendadas
+              Center(
+                child: Container(
+                  width: 50, // Tamaño más pequeño para `citas.png`
+                  height: 50,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/citas.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: Text(
+                  "Usted tiene ${citas.length} citas agendadas",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Usamos ListView con `shrinkWrap` y `NeverScrollableScrollPhysics`
               Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: citas.length > 3
-                      ? 3
-                      : citas.length, // Limita a 3 citas si hay más de 3
-                  itemBuilder: (context, index) {
-                    final cita = citas[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      child: ListTile(
-                        title: Text('Terapeuta: ${cita['terapeuta']}'),
-                        subtitle: Text(
-                          'Fecha: ${cita['fecha']}\nHora: ${cita['hora']}',
+                child: SingleChildScrollView(
+                  child: ListView.builder(
+                    shrinkWrap: true, // Ocupa solo el espacio necesario
+                    physics:
+                        const NeverScrollableScrollPhysics(), // Deshabilita el desplazamiento de ListView
+                    itemCount: citas.length,
+                    itemBuilder: (context, index) {
+                      final cita = citas[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: ListTile(
+                          title: Text('Servicio: ${cita['service_name']}'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Terapeuta: ${cita['therapist']}'),
+                              Text('Fecha: ${cita['day']}'),
+                              Text('Hora: ${cita['time']}'),
+                              Text('Creado el: ${cita['created_at']}'),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
             const SizedBox(height: 20),
-
-            // Botón para agregar una nueva cita (para prueba)
-            ElevatedButton(
-              onPressed: () {
-                // Aquí puedes probar añadiendo una nueva cita
-                agregarCita("Dr. Juan Pérez", "2024-10-10", "14:00");
-              },
-              child: const Text('Agregar cita'),
-            ),
+            Center(
+              child: ElevatedButton(
+                onPressed: citasMostradas
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const WelcomeScreen()),
+                        );
+                      }
+                    : _fetchReservas,
+                child:
+                    Text(citasMostradas ? 'Agendar cita' : 'Mostrar las citas'),
+              ),
+            )
           ],
         ),
       ),

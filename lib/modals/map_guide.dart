@@ -7,8 +7,8 @@ Map<String, Map<String, dynamic>> servicesData = {
   },
   'Registros Akáshicos': {
     'therapists': ['Joseline Torres'],
-    'availableTimes': ['9:00', '11:00', '13:00', '14:00'],
-    'availableDays': ['Lunes', 'Miércoles', 'Viernes'],
+    'availableTimes': ['09:00', '11:00', '13:00', '14:00'],
+    'availableDays': ['Lunes', 'Miercoles', 'Viernes'],
     'price': 20000,
   },
 

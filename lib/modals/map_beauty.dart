@@ -1,13 +1,13 @@
 Map<String, Map<String, dynamic>> servicesData = {
   'Limpieza facial': {
     'therapists': ['Camila González'],
-    'availableTimes': ['10:00', '12:00', '16:00 PM'],
-    'availableDays': ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+    'availableTimes': ['10:00', '12:00', '16:00 '],
+    'availableDays': ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'],
     'price': 20000,
   },
   'Spa Facial': {
-    'therapists': ['Nathaly Gómez', 'Carla Ruiz'],
-    'availableTimes': ['9:00', '10:00', '11:00', '13:00', '14:00'],
+    'therapists': ['Nathaly Gomez', 'Carla Ruiz'],
+    'availableTimes': ['09:00', '11:00', '13:00', '16:00'],
     'availableDays': ['Lunes', 'Martes', 'Jueves'],
     'price': 30000,
   },

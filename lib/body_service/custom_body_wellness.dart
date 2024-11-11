@@ -77,6 +77,17 @@ class CustomBodyWellness extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // Este espacio puede ser personalizado con más widgets o secciones
+                Text(
+                  'Aquí puedes encontrar los mejores servicios de bienestar .',
+                  style: AppTextStyles.bodyTextStyle.copyWith(
+                    fontSize: 16,
+                    color: AppColors.text,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 // Aquí agregamos la cuadrícula de los servicios de bienestar
                 GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),

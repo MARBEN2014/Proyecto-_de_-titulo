@@ -1,8 +1,8 @@
 Map<String, Map<String, dynamic>> servicesData = {
   'Sanación con Acompañamiento Emocional': {
     'therapists': ['Omar Guerra'],
-    'availableTimes': ['0900', '1200', '15:00 '],
-    'availableDays': ['Lunes', 'Miércoles', 'Viernes'],
+    'availableTimes': ['09:00', '12:00', '15:00 '],
+    'availableDays': ['Lunes', 'Miercoles', 'Viernes'],
     'price': 25000,
   },
   'Biomagnetismo': {
